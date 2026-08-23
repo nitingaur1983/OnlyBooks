@@ -1,0 +1,23 @@
+INFO:     Will watch for changes in these directories: ['/Users/nitin/Assembly/Projects/OnlyBooks/OnlyBooks']
+INFO:     Uvicorn running on http://127.0.0.1:8000 (Press CTRL+C to quit)
+INFO:     Started reloader process [65253] using WatchFiles
+INFO:     Started server process [65255]
+INFO:     Waiting for application startup.
+INFO:     Application startup complete.
+INFO:     127.0.0.1:52855 - "GET /docs HTTP/1.1" 200 OK
+INFO:     127.0.0.1:52855 - "GET /openapi.json HTTP/1.1" 200 OK
+WARNING:app.metadata_source:Open Library search failed for 're Eo vA vane oa ag mn isis': <urlopen error [Errno 54] Connection reset by peer>
+INFO:app.main:detection 10 not persisted as a book (status=NO_MATCH, reason=no_search_results)
+WARNING:app.metadata_source:Open Library search failed for 'ww Sa LISA SEE es fo mS me': <urlopen error timed out>
+INFO:app.main:detection 11 not persisted as a book (status=NO_MATCH, reason=no_search_results)
+WARNING:app.metadata_source:Open Library search failed for 'rm TT TI ie nC mas lt oy': <urlopen error timed out>
+INFO:app.main:detection 12 not persisted as a book (status=NO_MATCH, reason=no_search_results)
+WARNING:app.metadata_source:Open Library search failed for 'ee Crossing to tes on Infinity CSC CIM': <urlopen error timed out>
+INFO:app.main:detection 13 not persisted as a book (status=NO_MATCH, reason=no_search_results)
+WARNING:app.metadata_source:Open Library search failed for 'se oO WOOee oar MADELE See with oo': <urlopen error timed out>
+INFO:app.main:detection 14 not persisted as a book (status=NO_MATCH, reason=no_search_results)
+INFO:app.main:detection 15 not persisted as a book (status=NO_MATCH, reason=no_search_results)
+INFO:app.main:detection 16 not persisted as a book (status=NO_MATCH, reason=no_search_results)
+WARNING:app.metadata_source:Open Library search failed for 'LUC CMEC MAT IN JUNE BEASTS Jrin LID': <urlopen error [Errno 54] Connection reset by peer>
+INFO:app.main:detection 17 not persisted as a book (status=NO_MATCH, reason=no_search_results)
+INFO:     127.0.0.1:52856 - "POST /analyze HTTP/1.1" 200 OK
