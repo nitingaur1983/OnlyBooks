@@ -1,4 +1,6 @@
 import logging
+import os
+from dataclasses import asdict
 from pathlib import Path
 from uuid import uuid4
 
@@ -21,6 +23,11 @@ logger = logging.getLogger(__name__)
 BASE_DIR = Path(__file__).resolve().parent.parent
 UPLOAD_DIR = BASE_DIR / "data" / "uploads"
 UPLOAD_DIR.mkdir(parents=True, exist_ok=True)
+DEBUG_DIR = BASE_DIR / "data" / "debug"
+
+# Force debug artifacts on for every request without passing ?debug=true each
+# time (handy while iterating on the vision pipeline).
+VISION_DEBUG_DEFAULT = os.getenv("VISION_DEBUG", "0") == "1"
 
 Base.metadata.create_all(engine)
 
@@ -54,6 +61,7 @@ def root():
 async def analyze(
     image: UploadFile = File(...),
     store_name: str | None = Form(default=None),
+    debug: bool = Form(default=False),
     db: Session = Depends(get_db),
 ):
     suffix = Path(image.filename or "photo.jpg").suffix.lower() or ".jpg"
@@ -63,12 +71,18 @@ async def analyze(
     target = UPLOAD_DIR / f"{uuid4().hex}{suffix}"
     target.write_bytes(await image.read())
 
+    # ?debug=true (or VISION_DEBUG=1 env var) saves intermediate/annotated
+    # vision images under data/debug/<upload-id>/ for inspection.
+    debug_enabled = debug or VISION_DEBUG_DEFAULT
+    debug_dir = (DEBUG_DIR / target.stem) if debug_enabled else None
+
     try:
-        spines = vision.detect_and_read(target)
+        vision_result = vision.detect_and_read(target, debug_dir=debug_dir)
     except Exception as exc:
         target.unlink(missing_ok=True)
         raise HTTPException(status_code=422, detail=str(exc)) from exc
 
+    spines = vision_result.candidates
     repo = Repository(db)
     photo = repo.create_photo(image.filename or target.name, str(target), store_name)
 
@@ -122,6 +136,7 @@ async def analyze(
         "identified_count": len(identified_out),
         "detections": detections_out,
         "identified_books": identified_out,
+        "vision_debug": asdict(vision_result.debug),
     }
 
 

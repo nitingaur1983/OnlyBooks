@@ -1,8 +1,9 @@
 import pytest
-from sqlalchemy import create_engine
+from sqlalchemy import create_engine, event
 from sqlalchemy.orm import sessionmaker
+from sqlalchemy.pool import StaticPool
 
-from app.db import Base
+from app.db import Base, SCHEMA_NAME
 from app.matcher import MatchResult, MatchStatus
 from app.metadata_source import MetadataCandidate
 from app.models import Book
@@ -12,7 +13,16 @@ from app.vision import SpineCandidate
 
 @pytest.fixture
 def db_session():
-    engine = create_engine("sqlite://")
+    # Base.metadata is schema-qualified (only_books_schema, in real Postgres).
+    # SQLite has no real schema concept, so we ATTACH an in-memory database
+    # under that name and use a single shared connection (StaticPool) so the
+    # attachment persists across the session's queries.
+    engine = create_engine("sqlite://", poolclass=StaticPool, connect_args={"check_same_thread": False})
+
+    @event.listens_for(engine, "connect")
+    def _attach_schema(dbapi_connection, connection_record):
+        dbapi_connection.execute(f'ATTACH DATABASE ":memory:" AS {SCHEMA_NAME}')
+
     Base.metadata.create_all(engine)
     session = sessionmaker(bind=engine)()
     yield session

@@ -1,23 +1,37 @@
 INFO:     Will watch for changes in these directories: ['/Users/nitin/Assembly/Projects/OnlyBooks/OnlyBooks']
 INFO:     Uvicorn running on http://127.0.0.1:8000 (Press CTRL+C to quit)
-INFO:     Started reloader process [65253] using WatchFiles
-INFO:     Started server process [65255]
+INFO:     Started reloader process [2629] using WatchFiles
+INFO:     Started server process [2632]
 INFO:     Waiting for application startup.
 INFO:     Application startup complete.
-INFO:     127.0.0.1:52855 - "GET /docs HTTP/1.1" 200 OK
-INFO:     127.0.0.1:52855 - "GET /openapi.json HTTP/1.1" 200 OK
-WARNING:app.metadata_source:Open Library search failed for 're Eo vA vane oa ag mn isis': <urlopen error [Errno 54] Connection reset by peer>
-INFO:app.main:detection 10 not persisted as a book (status=NO_MATCH, reason=no_search_results)
-WARNING:app.metadata_source:Open Library search failed for 'ww Sa LISA SEE es fo mS me': <urlopen error timed out>
-INFO:app.main:detection 11 not persisted as a book (status=NO_MATCH, reason=no_search_results)
-WARNING:app.metadata_source:Open Library search failed for 'rm TT TI ie nC mas lt oy': <urlopen error timed out>
-INFO:app.main:detection 12 not persisted as a book (status=NO_MATCH, reason=no_search_results)
-WARNING:app.metadata_source:Open Library search failed for 'ee Crossing to tes on Infinity CSC CIM': <urlopen error timed out>
-INFO:app.main:detection 13 not persisted as a book (status=NO_MATCH, reason=no_search_results)
-WARNING:app.metadata_source:Open Library search failed for 'se oO WOOee oar MADELE See with oo': <urlopen error timed out>
-INFO:app.main:detection 14 not persisted as a book (status=NO_MATCH, reason=no_search_results)
-INFO:app.main:detection 15 not persisted as a book (status=NO_MATCH, reason=no_search_results)
-INFO:app.main:detection 16 not persisted as a book (status=NO_MATCH, reason=no_search_results)
-WARNING:app.metadata_source:Open Library search failed for 'LUC CMEC MAT IN JUNE BEASTS Jrin LID': <urlopen error [Errno 54] Connection reset by peer>
-INFO:app.main:detection 17 not persisted as a book (status=NO_MATCH, reason=no_search_results)
-INFO:     127.0.0.1:52856 - "POST /analyze HTTP/1.1" 200 OK
+INFO:     127.0.0.1:50115 - "GET /books HTTP/1.1" 200 OK
+INFO:     127.0.0.1:50116 - "GET /detections HTTP/1.1" 200 OK
+INFO:     127.0.0.1:50148 - "GET / HTTP/1.1" 200 OK
+INFO:     127.0.0.1:50148 - "GET /favicon.ico HTTP/1.1" 404 Not Found
+INFO:     127.0.0.1:50149 - "GET /docs HTTP/1.1" 200 OK
+INFO:     127.0.0.1:50149 - "GET /openapi.json HTTP/1.1" 200 OK
+INFO:app.vision:Processing image /Users/nitin/Assembly/Projects/OnlyBooks/OnlyBooks/data/uploads/de815dfdda1a41959f8ed2b7c474319f.jpg: width=4590 height=8160 channels=3
+INFO:app.vision:Shelf row detection: image_height=8160 raw_candidates=131 filtered_boundaries=0 shelf_count=1
+INFO:app.vision:Shelf detection summary:
+  shelf_count=1
+  boundaries=[]
+Shelf 0:
+  height=8160
+  raw_contours=144
+  accepted_spines=1
+  rejected_too_short=1
+  rejected_too_tall=0
+  rejected_too_wide=1
+  rejected_too_narrow=141
+  rejected_bad_aspect=0
+  rejected_crosses_boundary=0
+Total accepted spine candidates=1
+WARNING:app.vision:Shelf/spine detection: no confident shelf boundaries found; falling back to whole image as one shelf
+WARNING:app.vision:Shelf/spine detection: only 1 shelf(s) detected (< 3) -- shelf detection may have failed
+INFO:app.vision:detected 1 spine candidates in photo /Users/nitin/Assembly/Projects/OnlyBooks/OnlyBooks/data/uploads/de815dfdda1a41959f8ed2b7c474319f.jpg
+INFO:app.vision:OCR candidate #0 (shelf 0, local 0): x=4371 y=3807 w=219 h=4353
+INFO:app.vision:OCR candidate #0 result: text="a ‘a = ' A FF Le bed Lod 6 : = { 7°. ys ; > . - . a ve f- ft Gs 4,” - ie 2 -, wf <, 7 4 es . — ; . * Jaw ros 9 ci -_ = +t oP = = ik 4 - . — a * : S.J o . .& ‘7 Pa ee ia ai rt j ; . ™ ’ $$ Pree ld eape gas 2 hy = ==>. &,.@, \\\\ie } 25 wy : ”) 2 ~ —— (a eee ’ == =e. \\e 0 | s qi — ‘ , 29 ais +i = — — Ct “* ati 4 . yy ; -" confidence=31.92
+INFO:app.vision:Accepted OCR candidate #0: "a ‘a = ' A FF Le bed Lod 6 : = { 7°. ys ; > . - . a ve f- ft Gs 4,” - ie 2 -, wf <, 7 4 es . — ; . * Jaw ros 9 ci -_ = +t oP = = ik 4 - . — a * : S.J o . .& ‘7 Pa ee ia ai rt j ; . ™ ’ $$ Pree ld eape gas 2 hy = ==>. &,.@, \\\\ie } 25 wy : ”) 2 ~ —— (a eee ’ == =e. \\e 0 | s qi — ‘ , 29 ais +i = — — Ct “* ati 4 . yy ; -"
+INFO:app.vision:vision summary: total_raw_contours=144 final_candidate_count=1 final_spine_candidates=1 shelf_row_count=1 candidates_per_shelf={0: 1}
+INFO:app.main:detection 1 not persisted as a book (status=NO_MATCH, reason=no_search_results)
+INFO:     127.0.0.1:50154 - "POST /analyze HTTP/1.1" 200 OK

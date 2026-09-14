@@ -30,7 +30,7 @@ BookMatcher (matcher.py)                                   -- the ONLY "is this 
 Repository ── always writes Detection    OpenLibraryMetadataSource (metadata_source.py)
    └─ writes Book + BookSighting only if match_status ≥ MATCH_MIN_STATUS_TO_PERSIST
    ↓
-SQLite (data/books.db): photos → detections → books ← book_sightings
+Postgres (only_books_db): photos → detections → books ← book_sightings
 ```
 
 Each concern is its own module so pieces can be swapped independently:
@@ -67,6 +67,57 @@ Each concern is its own module so pieces can be swapped independently:
 | `METADATA_SEARCH_LIMIT` | `5` | Max Open Library search results considered |
 | `METADATA_TIMEOUT_SECONDS` | `4.0` | Timeout per Open Library call |
 
+## Database setup (Postgres)
+
+The app persists to Postgres, not SQLite. Create the local database, role, and
+privileges once:
+
+```sql
+CREATE DATABASE only_books_db;
+CREATE USER app_user;
+ALTER USER app_user WITH PASSWORD 'jaiganesh219@';
+GRANT ALL PRIVILEGES ON DATABASE only_books_db TO app_user;
+```
+
+All app tables live in a dedicated schema, `only_books_schema` — **not**
+Postgres's default `public` schema. Create it and make it `app_user`'s
+default so unqualified SQL (`SELECT * FROM books`) just works in `psql`:
+
+```sql
+CREATE SCHEMA IF NOT EXISTS only_books_schema AUTHORIZATION app_user;
+GRANT ALL ON SCHEMA only_books_schema TO app_user;
+ALTER ROLE app_user IN DATABASE only_books_db SET search_path TO only_books_schema, public;
+```
+
+Verify you can connect (reconnect after the `ALTER ROLE` above for the new
+`search_path` to take effect):
+
+```bash
+psql -d only_books_db -U app_user
+```
+```sql
+set search_path=only_books_schema;
+```
+
+`app/db.py` defaults to exactly this local setup (`localhost:5432`, `app_user` /
+`only_books_db` / `only_books_schema`). Override any part with env vars if your
+setup differs:
+
+| Env var | Default |
+|---|---|
+| `PGHOST` | `localhost` |
+| `PGPORT` | `5432` |
+| `PGDATABASE` | `only_books_db` |
+| `PGUSER` | `app_user` |
+| `PGPASSWORD` | `jaiganesh219@` |
+| `PGSCHEMA` | `only_books_schema` |
+| `DATABASE_URL` | *(unset — takes priority over all of the above if set, e.g. for a hosted DB)* |
+
+`app.main` calls `Base.metadata.create_all(engine)` on startup, so tables
+(`photos`, `detections`, `books`, `book_sightings`) are created automatically
+under `only_books_schema` the first time the app runs against a fresh
+database — no manual migration step needed for this POC.
+
 ## Run
 
 Python 3.11+ is recommended. Tesseract must also be installed on the machine (`brew install tesseract` on macOS).
@@ -76,6 +127,12 @@ python -m venv .venv
 source .venv/bin/activate        # Windows: .venv\\Scripts\\activate
 pip install -r requirements.txt
 uvicorn app.main:app --reload
+
+#To kill the existing process
+lsof -tiTCP:8000 -sTCP:LISTEN | xargs kill
+#To restart the App
+mkdir -p /Users/nitin/Assembly/Projects/OnlyBooks/logs
+nohup .venv/bin/uvicorn app.main:app --reload >  /Users/nitin/Assembly/Projects/OnlyBooks/logs/onlybooks.log 2>&1 &
 ```
 
 For running tests, install dev deps instead: `pip install -r requirements-dev.txt`, then `pytest`.
@@ -125,7 +182,7 @@ You can also inspect:
 - `GET /books` — only verified books.
 - `GET /detections` (optionally `?status=NO_MATCH|LOW_CONFIDENCE|POSSIBLE_MATCH|HIGH_CONFIDENCE`) — full evidence trail, including rejected candidates and *why* they were rejected.
 - `GET /sightings`
-- SQLite DB: `data/books.db`
+- Postgres DB: `only_books_db` (see [Database setup](#database-setup-postgres))
 - Uploaded images: `data/uploads/`
 
 ### Inspecting the database directly
