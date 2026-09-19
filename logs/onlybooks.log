@@ -35,3 +35,8 @@ INFO:app.vision:Accepted OCR candidate #0: "a ‘a = ' A FF Le bed Lod 6 : = { 7
 INFO:app.vision:vision summary: total_raw_contours=144 final_candidate_count=1 final_spine_candidates=1 shelf_row_count=1 candidates_per_shelf={0: 1}
 INFO:app.main:detection 1 not persisted as a book (status=NO_MATCH, reason=no_search_results)
 INFO:     127.0.0.1:50154 - "POST /analyze HTTP/1.1" 200 OK
+INFO:     Shutting down
+INFO:     Waiting for application shutdown.
+INFO:     Application shutdown complete.
+INFO:     Finished server process [2632]
+INFO:     Stopping reloader process [2629]
