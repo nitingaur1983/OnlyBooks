@@ -75,7 +75,7 @@ privileges once:
 ```sql
 CREATE DATABASE only_books_db;
 CREATE USER app_user;
-ALTER USER app_user WITH PASSWORD 'jaiganesh219@';
+ALTER USER app_user WITH PASSWORD '<your-password>';
 GRANT ALL PRIVILEGES ON DATABASE only_books_db TO app_user;
 ```
 
@@ -109,7 +109,7 @@ setup differs:
 | `PGPORT` | `5432` |
 | `PGDATABASE` | `only_books_db` |
 | `PGUSER` | `app_user` |
-| `PGPASSWORD` | `jaiganesh219@` |
+| `PGPASSWORD` | *(local dev default set in `app/db.py`)* |
 | `PGSCHEMA` | `only_books_schema` |
 | `DATABASE_URL` | *(unset — takes priority over all of the above if set, e.g. for a hosted DB)* |
 

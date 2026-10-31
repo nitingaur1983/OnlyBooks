@@ -1,0 +1,12 @@
+__pycache__/
+*.pyc
+.DS_Store
+.idea/
+
+# SQLite databases and backups
+*.db
+*.db.bak.*
+
+# Uploaded photos and vision debug output
+data/uploads/
+data/debug/
