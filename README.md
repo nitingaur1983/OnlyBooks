@@ -233,12 +233,25 @@ curl -X POST http://127.0.0.1:8000/analyze/vlm -F image=@shelf.jpg -F mode=tiled
 
 How it works (`app/vlm/`): `service.py` loads the image (EXIF-corrected), builds regions (`geometry.compute_tiles`, deterministic grid), calls the provider for each region concurrently (`VLM_MAX_CONCURRENCY`), validates each returned item individually, converts boxes to original-image pixels, then merges duplicates across overlapping tiles (`geometry.dedupe_across_tiles`: needs box overlap from *different* tiles and non-contradicting text, so same-title copies never merge).
 
+- **Dedupe (`app/vlm/dedupe.py`):** two observations from different tiles are compared only inside the zone *both* tiles saw, so a spine cut off by one tile's edge still matches the full spine from its neighbour. Box agreement there (IoU ≥ 0.7) merges unless the texts contradict; 0.5–0.7 merges only when the text agrees (same title, or one read's author/title found on the other). A book never gets two observations from one tile, and every pair inside a book must itself qualify, so A~B~C chains can't fuse distinct books. Contradictions and gray-zone overlaps are not merged; they're listed in `ambiguous_pairs.json` and the book gets `needs_review: true`. Each detection lists its `observation_ids` (`t<tile>:<index>`); full provenance is in `dedupe_report.json`. Thresholds: `VLM_DEDUPE_*` in `.env.example`.
 - **Coordinates:** the model returns Gemini's `box_2d = [ymin, xmin, ymax, xmax]` normalized 0–1000 relative to the image region it saw. The response `bbox` is `{x, y, width, height}` in original-image pixels (origin top-left, after EXIF rotation); the untouched model coordinates are kept as `model_box_2d`. Malformed, inverted, out-of-range or tiny boxes are rejected and listed in diagnostics; nothing is fabricated.
 - **No confidence numbers:** `model_confidence` is always `null`. Use `title_readability` (`CLEAR`/`PARTIAL`/`UNREADABLE`/`NOT_VISIBLE`) and `identification_status`. A title marked readable without any title text is downgraded to `UNREADABLE`.
 - **Errors:** 429/5xx/connection errors are retried with exponential backoff (`VLM_MAX_RETRIES`); timeouts (including Gemini's 504 `DEADLINE_EXCEEDED`) are not, unless `VLM_RETRY_ON_TIMEOUT=true`. A bad key or unknown model stops the remaining tiles. If some tiles fail the response is `status: "partial"` with `errors`; if all fail it's a 4xx/5xx carrying the same diagnostics.
 - **Performance:** `performance` in the response has total, image load/preparation, per-region API time, queue wait, JSON parsing, box processing, dedupe and debug-write times. `tokens` has usage, and `estimated_cost_usd` if `VLM_PRICE_INPUT_PER_MTOK`/`VLM_PRICE_OUTPUT_PER_MTOK` are set.
 
 Debug output in `data/debug/vlm/<request_id>/`: `original.jpg`, `annotated.jpg` (green = readable title, yellow = partial, red = unreadable; blue = tile grid), `tiles/` (exactly what was sent), `annotated_tiles/` (each tile's own detections before dedupe), `response.json` (raw model output per region), `diagnostics.json` (config without the key, per-region timings/tokens/attempts, rejected boxes, every dedupe decision). Logs use the `app.vlm` logger and include the request id.
+
+Dedupe artifacts in the same folder: `deduplicated_annotated.jpg` (green = merged from several tiles, cyan = one tile, orange = needs review), `dedupe_review.jpg` (every observation with its id; green lines = merged, magenta = ambiguous, red = overlapping but kept apart), `dedupe_report.json`, `ambiguous_pairs.json`, `pair_decisions.json`.
+
+### Offline replay
+
+Rerun dedupe on a saved run without calling Gemini (no network, no DB; the input folder is only read):
+
+```bash
+.venv/bin/python -m app.vlm.replay --input data/debug/vlm/<request_id> [--output data/debug/vlm_replay/<run_id>]
+```
+
+Writes `candidates.json` (new final list), the dedupe artifacts above, `comparison.json` (legacy vs current algorithm, pair by pair), `replay_summary.json` (counts, timings) and `review/` (≈40 sampled decisions as close-up crops plus `review_set.json` with a `human_verdict` field to fill in).
 
 All settings and defaults: `.env.example`.
 

@@ -118,3 +118,9 @@ class VLMDetection(BaseModel):
     model_box_2d: list[int]  # untouched model coordinates (0..1000, tile/image-relative)
     warnings: list[str] = []
     merged_duplicates: list[DuplicateRef] = []
+    # Tiled mode: every per-tile observation ("t<tile>:<index>") folded into
+    # this physical book, and whether dedupe left an open question about it.
+    # Full provenance is in dedupe_report.json.
+    observation_ids: list[str] = []
+    needs_review: bool = False
+    review_reasons: list[str] = []

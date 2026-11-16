@@ -20,13 +20,13 @@ from pathlib import Path
 from PIL import Image, ImageOps, UnidentifiedImageError
 from pydantic import ValidationError
 
-from .config import VLMConfig
-from .debug import DebugWriter, draw_detections
+from .config import VLMConfig, load_dedupe_config
+from .debug import DebugWriter, draw_detections, write_dedupe_artifacts
+from .dedupe import dedupe_physical_books
 from .geometry import (
     InvalidBox,
     Tile,
     compute_tiles,
-    dedupe_across_tiles,
     full_image_region,
     model_box_to_pixels,
     validate_in_image,
@@ -355,10 +355,12 @@ async def analyze_image(
     all_detections = [d for r in results for d in r.detections]
 
     t0 = time.perf_counter()
+    dedupe = None
     if is_tiled:
-        detections, dedupe_decisions = dedupe_across_tiles(all_detections)
+        dedupe = dedupe_physical_books(all_detections, regions, load_dedupe_config())
+        detections = dedupe.books
     else:
-        detections, dedupe_decisions = sorted(all_detections, key=lambda d: (d.bbox.y, d.bbox.x)), []
+        detections = sorted(all_detections, key=lambda d: (d.bbox.y, d.bbox.x))
         for i, d in enumerate(detections):
             d.index = i
     dedupe_ms = _ms(t0)
@@ -371,6 +373,8 @@ async def analyze_image(
         **_summary(detections),
         "detections_before_dedupe": len(all_detections),
         "duplicates_removed": duplicates_removed,
+        "books_needing_review": sum(1 for d in detections if d.needs_review),
+        "ambiguous_pairs": len(dedupe.ambiguous_pairs) if dedupe else 0,
         "invalid_boxes_rejected": sum(len(r.invalid_boxes) for r in results),
         "items_failed_validation": sum(len(r.item_errors) for r in results),
         "regions_total": len(results),
@@ -408,6 +412,9 @@ async def analyze_image(
                  "raw_text": r.raw_text, "parsed_valid_detections": [d.model_dump(mode="json") for d in per_tile[r.region.tile_id]]}
                 for r in results
             ])
+            if dedupe:
+                write_dedupe_artifacts(debug, image, dedupe.books, dedupe.report, dedupe.pair_decisions,
+                                       dedupe.ambiguous_pairs, regions)
         await asyncio.to_thread(write_debug)
     debug_write_ms = _ms(t0)
 
@@ -446,7 +453,9 @@ async def analyze_image(
         "warnings": warnings,
         "errors": errors,
         "regions": [r.diagnostics() for r in results],
-        "dedupe_decisions": dedupe_decisions,
+        "dedupe": dedupe.report["summary"] | {"algorithm": dedupe.report["algorithm"], "config": dedupe.report["config"]}
+        if dedupe else None,
+        "dedupe_decisions": dedupe.pair_decisions if dedupe else [],
     }
     debug.save_json("diagnostics_path", "diagnostics.json", diagnostics)
     performance["total_ms"] = _ms(t_total)

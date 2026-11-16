@@ -115,3 +115,19 @@ def load_vlm_config() -> VLMConfig:
         price_input_per_mtok=_float_env("VLM_PRICE_INPUT_PER_MTOK", None),
         price_output_per_mtok=_float_env("VLM_PRICE_OUTPUT_PER_MTOK", None),
     )
+
+
+def load_dedupe_config():
+    """Physical-book dedupe thresholds (see app/vlm/dedupe.py), each
+    overridable as VLM_DEDUPE_<FIELD> (e.g. VLM_DEDUPE_STRONG_IOU=0.75)."""
+    from dataclasses import fields
+
+    from .dedupe import DedupeConfig
+
+    defaults = DedupeConfig()
+    values = {}
+    for f in fields(DedupeConfig):
+        name = f"VLM_DEDUPE_{f.name.upper()}"
+        default = getattr(defaults, f.name)
+        values[f.name] = _int_env(name, default) if isinstance(default, int) else _float_env(name, default)
+    return DedupeConfig(**values)

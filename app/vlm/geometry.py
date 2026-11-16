@@ -188,7 +188,10 @@ class DedupeThresholds:
 def dedupe_across_tiles(
     detections: list[VLMDetection], thresholds: DedupeThresholds = DedupeThresholds()
 ) -> tuple[list[VLMDetection], list[dict]]:
-    """Merge detections of the same physical book reported by overlapping tiles.
+    """Legacy dedupe, kept for comparison in app/vlm/replay.py. Live requests
+    use app/vlm/dedupe.py (shared-zone comparison, chain-merge guards).
+
+    Merge detections of the same physical book reported by overlapping tiles.
 
     Two detections merge only if ALL hold:
       - they come from different tiles (one tile's books are distinct books);
