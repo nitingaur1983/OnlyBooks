@@ -37,6 +37,10 @@ Request flow for `POST /analyze` (`app/main.py`, the place where everything is w
 
 Invariant to keep: a `books` row must never be created from OCR text alone.
 
+### Experimental VLM pipeline (`POST /analyze/vlm`, `app/vlm/`)
+
+A separate Gemini-based detector registered in `main.py` via `app.include_router(vlm_router)`. It must stay independent: it doesn't import `vision.py`, cv2, pytesseract, the matcher or the DB, and it is read-only toward the database (output goes to the response and `data/debug/vlm/<request_id>/`). `service.py` runs the pipeline; `geometry.py` holds the pure logic (tiling, Gemini `box_2d` [ymin, xmin, ymax, xmax] 0–1000 → pixel conversion, cross-tile dedupe); providers implement the `provider.VLMProvider` protocol (`gemini_provider.py` is the only one). Settings come from `.env` (loaded once at import by `app/vlm/config.py`, so restart after editing it); see `.env.example`. Tests in `tests/test_vlm.py` use a stub provider and make no API calls.
+
 ## Database
 
 - The app uses Postgres (`only_books_db`). All tables live in the **`only_books_schema`** schema, not `public`, because `Base.metadata` in `app/db.py` is schema-qualified. Connection settings come from `DATABASE_URL` or `PG*` env vars; the defaults are in `app/db.py`.

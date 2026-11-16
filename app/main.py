@@ -16,6 +16,7 @@ from .models import Book, BookSighting, Detection
 from .ocr_cleanup import clean
 from .repository import Repository
 from .vision import ShelfVision
+from .vlm.router import router as vlm_router
 
 logging.basicConfig(level=logging.INFO)
 logger = logging.getLogger(__name__)
@@ -32,6 +33,9 @@ VISION_DEBUG_DEFAULT = os.getenv("VISION_DEBUG", "0") == "1"
 Base.metadata.create_all(engine)
 
 app = FastAPI(title="Local Books Vision POC", version="0.2.0")
+# Experimental Gemini pipeline (POST /analyze/vlm). Independent of the
+# OpenCV/Tesseract pipeline below and never writes to the database.
+app.include_router(vlm_router)
 vision = ShelfVision()
 metadata_source = OpenLibraryMetadataSource(timeout_seconds=DEFAULT_CONFIG.metadata_timeout_seconds)
 matcher = BookMatcher(metadata_source, DEFAULT_CONFIG)
@@ -57,7 +61,7 @@ def root():
     }
 
 
-@app.post("/analyze")
+@app.post("/analyze", tags=["OpenCV Analysis"])
 async def analyze(
     image: UploadFile = File(...),
     store_name: str | None = Form(default=None),
@@ -140,7 +144,7 @@ async def analyze(
     }
 
 
-@app.get("/books")
+@app.get("/books", tags=["Inventory"])
 def books(db: Session = Depends(get_db)):
     rows = db.scalars(select(Book).order_by(Book.id.desc())).all()
     return [
@@ -149,7 +153,7 @@ def books(db: Session = Depends(get_db)):
     ]
 
 
-@app.get("/detections")
+@app.get("/detections", tags=["Inventory"])
 def detections(db: Session = Depends(get_db), status: str | None = None):
     """Debug endpoint: every spine candidate ever seen, matched or not.
 
@@ -177,7 +181,7 @@ def detections(db: Session = Depends(get_db), status: str | None = None):
     ]
 
 
-@app.get("/sightings")
+@app.get("/sightings", tags=["Inventory"])
 def sightings(db: Session = Depends(get_db)):
     rows = db.scalars(select(BookSighting).order_by(BookSighting.id.desc())).all()
     return [

@@ -10,3 +10,4 @@ __pycache__/
 # Uploaded photos and vision debug output
 data/uploads/
 data/debug/
+.env
